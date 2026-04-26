@@ -16,10 +16,52 @@ import time
 import argparse
 import io
 import uuid
+import socket
+import ipaddress
+import urllib.parse
 import requests
 from datetime import datetime
 from tavily import TavilyClient
 import pdfplumber
+
+# ── SSRF guard ────────────────────────────────────────────────────────────────
+# Ranges that must never be contacted: loopback, private, link-local (incl.
+# cloud-metadata at 169.254.169.254), and IPv6 equivalents.
+_BLOCKED_NETS = [
+    ipaddress.ip_network("0.0.0.0/8"),
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("169.254.0.0/16"),   # link-local / cloud metadata
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
+]
+
+def _is_safe_url(url: str) -> bool:
+    """Return True only for http/https URLs whose hostname resolves to a
+    public IP address.  Blocks private, loopback, and link-local targets."""
+    try:
+        parsed = urllib.parse.urlparse(url)
+    except Exception:
+        return False
+    if parsed.scheme not in ("http", "https"):
+        return False
+    hostname = parsed.hostname
+    if not hostname:
+        return False
+    try:
+        addr = ipaddress.ip_address(socket.gethostbyname(hostname))
+    except Exception:
+        return False
+    for net in _BLOCKED_NETS:
+        try:
+            if addr in net:
+                return False
+        except TypeError:
+            pass  # mixed IPv4/IPv6 comparison
+    return True
 
 # Configurazione
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "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")
@@ -122,9 +164,11 @@ def auto_extract_power_capacity(model_name):
     return None, None
 
 def extract_text_from_pdf_stream(url):
+    if not _is_safe_url(url):
+        return ""
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     try:
-        resp = requests.get(url, timeout=20, headers=headers)
+        resp = requests.get(url, timeout=20, headers=headers, allow_redirects=False)
         if resp.status_code != 200: return ""
         text = ""
         with pdfplumber.open(io.BytesIO(resp.content)) as pdf:
@@ -328,9 +372,12 @@ def extract_specs_from_text(text, category, model_name=""):
 # =============================================================================
 
 def is_url_reachable(url):
+    if not _is_safe_url(url):
+        return False
     headers = {"User-Agent": "Mozilla/5.0"}
     try:
-        resp = requests.get(url, stream=True, timeout=10, headers=headers, allow_redirects=True)
+        # allow_redirects=False prevents redirect-based SSRF bypass
+        resp = requests.get(url, stream=True, timeout=10, headers=headers, allow_redirects=False)
         return resp.status_code < 400
     except: return False
 
