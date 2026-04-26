@@ -323,7 +323,7 @@ function DraftEditor() {
 
       {/* ── Solar panel settings: one collapsible block holding the panel
             shape / placement parameters that drive the next layout. ── */}
-      <Collapsible title="Solar panel settings" defaultOpen={true}>
+      <Collapsible title="Solar panel settings" defaultOpen={false}>
         <Section title="Panel type">
           <PanelCatalogue selected={panelIdx} onChange={i => store.set({ panelTypeIdx: i })} />
           {isCustom && (
@@ -636,27 +636,36 @@ function Collapsible({ title, defaultOpen = true, children }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div style={{
-      background: '#0f172a', border: '1px solid #2a2a4a', borderRadius: 8,
+      background: '#1a2540',
+      border: `1.5px solid ${open ? '#f5a623' : '#3b4d6e'}`,
+      borderRadius: 10,
       overflow: 'hidden',
+      boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
     }}>
       <button
         onClick={() => setOpen(o => !o)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          padding: '10px 12px', color: '#f5a623',
-          fontSize: '0.78rem', fontWeight: 800,
+          background: open ? '#23314f' : 'transparent', border: 'none', cursor: 'pointer',
+          padding: '12px 14px', color: '#f5a623',
+          fontSize: '0.85rem', fontWeight: 800,
           textTransform: 'uppercase', letterSpacing: '0.08em',
+          transition: 'background 0.15s',
         }}
-        title={open ? 'Collapse' : 'Expand'}
+        title={open ? 'Collapse this section' : 'Expand to edit panel settings'}
       >
-        <span>{title}</span>
-        <span style={{ fontSize: '0.85rem' }}>{open ? '▾' : '▸'}</span>
+        <span>⚙ {title}</span>
+        <span style={{
+          fontSize: '0.95rem',
+          transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+          transition: 'transform 0.15s',
+          display: 'inline-block',
+        }}>▾</span>
       </button>
       {open && (
         <div style={{
-          padding: '4px 12px 12px', display: 'flex', flexDirection: 'column', gap: 12,
-          borderTop: '1px solid #2a2a4a',
+          padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 14,
+          borderTop: '1px solid #2a3a5a', background: '#0f172a',
         }}>
           {children}
         </div>
