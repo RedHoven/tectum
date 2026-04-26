@@ -18,3 +18,5 @@ export function buildReportProps(storeState, pipelineData) {
 
   return { intake: intakeData, pipelineData };
 }
+
+export { buildReportProps as deriveReportData };

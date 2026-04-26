@@ -32,7 +32,7 @@ export default function Sidebar() {
       const canvas = document.querySelector('canvas');
       const screenshot = canvas ? canvas.toDataURL('image/jpeg', 0.88) : null;
 
-      const { generateReport } = await import('@/lib/generateReport');
+      const { generateReport } = await import('../lib/generateReport');
       const blob = await generateReport(store.get(), screenshot);
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
