@@ -14,7 +14,10 @@ import { btnStyle } from './SolarPlanner';
 //      overlays are also surfaced (PlannerView gates them on draftEditing)
 //      so panels and roof tweaks happen side-by-side.
 export default function TemplatesPanel() {
-  const [open, setOpen] = useState(true);
+  const open = useStore(s => s.sidebarOpen);
+  const setOpen = (v) => store.set(typeof v === 'function'
+    ? (s) => ({ sidebarOpen: v(s.sidebarOpen) })
+    : { sidebarOpen: v });
   const draftEditing    = useStore(s => s.draftEditing);
   const selectedPanelKeys = useStore(s => s.selectedPanelKeys);
   const showPanelPopup = draftEditing && selectedPanelKeys.length === 1;

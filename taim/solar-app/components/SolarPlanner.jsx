@@ -1028,6 +1028,7 @@ function TopBar() {
 // dedicated screens.
 function TabsBar() {
   const tab = useStore(s => s.activeTab);
+  const sidebarOpen = useStore(s => s.sidebarOpen);
   const templates = useStore(s => s.templates.length);
   const drafts    = useStore(s => s.drafts.length);
   const TABS = [
@@ -1037,10 +1038,13 @@ function TabsBar() {
   ];
   return (
     <div style={{
-      position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
+      position: 'absolute', top: 12,
+      left: sidebarOpen ? 'calc((100% - 320px) / 2)' : '50%',
+      transform: 'translateX(-50%)',
       display: 'flex', gap: 4, zIndex: 30,
       background: 'rgba(10,18,34,0.92)', border: '1px solid #38506d',
       borderRadius: 999, padding: 4, boxShadow: '0 10px 24px rgba(0,0,0,0.4)',
+      transition: 'left 0.25s ease',
     }}>
       {TABS.map(t => {
         const active = t.id === tab;
@@ -1068,17 +1072,20 @@ function BottomControls() {
   const meshSmooth   = useStore(s => s.meshSmoothLevel);
   const activeRoofId = useStore(s => s.activeRoofId);
   const texturesOn   = useStore(s => s.texturesOn);
+  const sidebarOpen  = useStore(s => s.sidebarOpen);
   const [open, setOpen] = useState(true);
 
-  // Centered along the bottom of the *visible canvas* (viewport minus the
-  // 320px right sidebar).
+  // Centred along the bottom of whatever's visible: when the right-hand
+  // sidebar is open, that's the viewport minus 320px; when it's hidden,
+  // it's the full viewport.
   const wrapStyle = {
     position: 'fixed',
     bottom: 18,
-    left: 'calc((100% - 320px) / 2)',
+    left: sidebarOpen ? 'calc((100% - 320px) / 2)' : '50%',
     transform: 'translateX(-50%)',
     zIndex: 45,
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+    transition: 'left 0.25s ease',
   };
 
   if (!open) {
@@ -1111,17 +1118,17 @@ function BottomControls() {
       >▼ Hide</button>
       <div style={{
         display: 'flex', gap: 10, background: 'rgba(10,18,34,0.96)', border: '1px solid #38506d',
-        borderRadius: 16, padding: '10px 14px', alignItems: 'center', flexWrap: 'wrap',
+        borderRadius: 16, padding: '10px 14px', alignItems: 'center', flexWrap: 'nowrap',
         boxShadow: '0 14px 40px rgba(0,0,0,0.45)',
-        maxWidth: 'min(720px, calc(100vw - 360px))',
+        maxWidth: sidebarOpen ? 'calc(100vw - 360px)' : 'calc(100vw - 40px)',
       }}>
         <ControlGroup label="Mode">
-          <ModeCtl id="orbit" current={mode}>View</ModeCtl>
-          <ModeCtl id="crop" current={mode}>Crop</ModeCtl>
-          <ModeCtl id="select" current={mode}>Select</ModeCtl>
-          <ModeCtl id="polygon" current={mode}>Polygon</ModeCtl>
-          <ModeCtl id="pick" current={mode}>Pick</ModeCtl>
-          <ModeCtl id="erase" current={mode}>Erase</ModeCtl>
+          <ModeCtl id="orbit"   current={mode} icon="👁">View</ModeCtl>
+          <ModeCtl id="crop"    current={mode} icon="✂">Crop</ModeCtl>
+          <ModeCtl id="select"  current={mode} icon="▣">Select</ModeCtl>
+          <ModeCtl id="polygon" current={mode} icon="⬢">Polygon</ModeCtl>
+          <ModeCtl id="pick"    current={mode} icon="🎯">Pick</ModeCtl>
+          <ModeCtl id="erase"   current={mode} icon="🧽">Erase</ModeCtl>
         </ControlGroup>
         <button
           onClick={() => dispatch('mask:smooth')}
@@ -1164,7 +1171,7 @@ function ControlGroup({ label, children }) {
   );
 }
 
-function ModeCtl({ id, current, children }) {
+function ModeCtl({ id, current, icon, children }) {
   const active = id === current;
   return (
     <button
@@ -1173,8 +1180,12 @@ function ModeCtl({ id, current, children }) {
         ...btnStyle('ctl'),
         background: active ? '#4ade80' : '#2a2a4a',
         color: active ? '#0d1b2a' : '#e0e0e0',
+        display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
       }}
-    >{children}</button>
+    >
+      {icon && <span aria-hidden="true" style={{ fontSize: '0.95em', lineHeight: 1 }}>{icon}</span>}
+      {children}
+    </button>
   );
 }
 
@@ -1191,6 +1202,7 @@ function SelectionActionBar() {
   const ids      = useStore(s => s.selectedRoofIds);
   const activeId = useStore(s => s.activeRoofId);
   const total    = useStore(s => s.roofs.length);
+  const sidebarOpen = useStore(s => s.sidebarOpen);
   if (!ids || ids.length === 0) return null;
   // The currently highlighted (active) roof is implicitly part of any
   // multi-selection — surface that in the count and apply it to actions so
@@ -1207,12 +1219,14 @@ function SelectionActionBar() {
   return (
     <div style={{
       position: 'fixed', bottom: 18,
-      left: 'calc((100% - 320px) / 2)', transform: 'translateX(-50%)',
-      zIndex: 46, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
+      left: sidebarOpen ? 'calc((100% - 320px) / 2)' : '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 46, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'nowrap',
       background: 'rgba(10,18,34,0.96)', border: '1px solid #a855f7',
       borderRadius: 16, padding: '10px 14px',
       boxShadow: '0 14px 40px rgba(0,0,0,0.45)',
-      maxWidth: 'min(720px, calc(100vw - 360px))',
+      maxWidth: sidebarOpen ? 'calc(100vw - 360px)' : 'calc(100vw - 40px)',
+      transition: 'left 0.25s ease',
     }}>
       <span style={{ color: '#d8b4fe', fontSize: '0.8rem', fontWeight: 700 }}>
         {count} selected
@@ -1265,12 +1279,16 @@ function SelectionActionBar() {
 
 function HintBar() {
   const hint = useStore(s => s.hint);
+  const sidebarOpen = useStore(s => s.sidebarOpen);
   return (
     <div style={{
-      position: 'absolute', top: 80, left: '50%', transform: 'translateX(-50%)',
+      position: 'absolute', top: 80,
+      left: sidebarOpen ? 'calc((100% - 320px) / 2)' : '50%',
+      transform: 'translateX(-50%)',
       background: 'rgba(22,33,62,0.92)', border: '1px solid #2a2a4a', borderRadius: 20,
       padding: '8px 20px', fontSize: '0.78rem', color: '#cbd5e1', pointerEvents: 'none', zIndex: 50,
       maxWidth: '70%', textAlign: 'center',
+      transition: 'left 0.25s ease',
     }}>{hint}</div>
   );
 }

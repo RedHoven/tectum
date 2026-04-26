@@ -1709,25 +1709,6 @@ function CompassRose() {
       <lineSegments geometry={lineGeom}>
         <lineBasicMaterial color={0x334466} />
       </lineSegments>
-
-      {/* Direction labels via HTML */}
-      {COMPASS_DIRS.map(d => (
-        <group key={d.label} position={[d.x, 1.5, d.z]}>
-          <Html center distanceFactor={80}>
-            <div style={{
-              color: d.color,
-              fontWeight: 800,
-              fontSize: 22,
-              lineHeight: 1,
-              textShadow: '0 0 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
-              pointerEvents: 'none',
-              userSelect: 'none',
-              fontFamily: 'system-ui, sans-serif',
-              letterSpacing: '-0.02em',
-            }}>{d.label}</div>
-          </Html>
-        </group>
-      ))}
     </group>
   );
 }
